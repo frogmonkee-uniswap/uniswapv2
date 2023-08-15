@@ -25,7 +25,7 @@ contract UniswapV2PairTest is Test {
         token1.mint(address(LP2), 6 ether);
     }
 
-    function testMint() public {
+    function testMintAndBurn() public {
         vm.prank(LP1);
         token0.transfer(address(pair), 4 ether);
         vm.prank(LP1);
@@ -50,5 +50,13 @@ contract UniswapV2PairTest is Test {
         assertEq(pair.reserve1(), 15 ether);
         assertEq(pair.reserve0(), 13 ether);
         assertEq(pair.totalSupply(), 10 ether);
+
+
+        vm.prank(LP2);
+        pair.burn();
+        assertEq(pair.balanceOf(LP2), 0);
+        // Not 9 ETH bc LP2 provided lopsided liquidity and only got LP tokens based on 6e18 of token1
+        assertEq(token0.balanceOf(LP2), 5.2 ether);
+        assertEq(token1.balanceOf(LP2), 6 ether);
     }
 }

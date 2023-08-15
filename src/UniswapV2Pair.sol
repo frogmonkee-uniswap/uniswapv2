@@ -6,10 +6,11 @@ import "solmate/tokens/ERC20.sol";
 
 interface IERC20 {
   function balanceOf(address) external returns (uint256);
-  function transfer(address to, address from) external;
+  function transfer(address to, uint256 amount) external;
 }
 
 error InsufficientLiquidityMinted();
+error InsufficientLiquidityBurned();
 
 contract UniswapV2Pair is ERC20, Math {
   uint public reserve0;
@@ -19,6 +20,7 @@ contract UniswapV2Pair is ERC20, Math {
   uint256 constant MINIMUM_LIQUIDITY = 1000;
 
   event Mint(address indexed sender, uint256 amount0, uint256 amount1);
+  event Burn(address indexed sender, uint256 amount0, uint256 amount1);
 
   constructor(address _token0, address _token1) ERC20("UniswapV2Pair", "UniV2", 18) {
     token0 = _token0;
@@ -48,6 +50,28 @@ contract UniswapV2Pair is ERC20, Math {
     _update(balance0, balance1);
 
     emit Mint(msg.sender, amount0, amount1);
+  }
+
+  function burn() public {
+    uint256 liquidity = balanceOf[msg.sender];
+    uint256 balance0 = IERC20(token0).balanceOf(address(this));
+    uint256 balance1 = IERC20(token1).balanceOf(address(this));
+    uint256 amount0 = (balance0 * liquidity) / totalSupply;
+    uint256 amount1 = (balance1 * liquidity) / totalSupply;
+
+    if (amount0 <= 0 || amount1 <= 0) revert InsufficientLiquidityBurned();
+
+    _burn(msg.sender, liquidity);
+
+    IERC20(token0).transfer(msg.sender, amount0);
+    IERC20(token1).transfer(msg.sender, amount1);
+
+    balance0 = IERC20(token0).balanceOf(address(this));
+    balance1 = IERC20(token1).balanceOf(address(this));
+
+    _update(balance0, balance1);
+
+    emit Burn(msg.sender, amount0, amount1);
   }
 
   function _update(uint256 _balance0, uint256 _balance1) private {
