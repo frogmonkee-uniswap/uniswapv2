@@ -12,8 +12,8 @@ interface IERC20 {
 error InsufficientLiquidityMinted();
 
 contract UniswapV2Pair is ERC20, Math {
-  uint256 public reserve0;
-  uint256 public reserve1;
+  uint public reserve0;
+  uint public reserve1;
   address public token0;
   address public token1;
   uint256 constant MINIMUM_LIQUIDITY = 1000;

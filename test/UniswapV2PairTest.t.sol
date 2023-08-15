@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "lib/forge-std/src/Test.sol";
+import "lib/forge-std/src/console.sol";
 import "src/UniswapV2Pair.sol";
 import "./mocks/ERC20Mintable.sol";
 
@@ -19,9 +20,9 @@ contract UniswapV2PairTest is Test {
         LP1 = makeAddr("LP1");
         token0.mint(address(LP1), 4 ether);
         token1.mint(address(LP1), 9 ether);
-        LP2 = makeAddr("LP1");
-        token0.mint(address(LP2), 4 ether);
-        token1.mint(address(LP2), 9 ether);
+        LP2 = makeAddr("LP2");
+        token0.mint(address(LP2), 9 ether);
+        token1.mint(address(LP2), 6 ether);
     }
 
     function testMint() public {
@@ -33,10 +34,21 @@ contract UniswapV2PairTest is Test {
         pair.mint();
 
         assertEq(pair.balanceOf(LP1), 6 ether - 1000);
-        assertEq(pair.reserve0, 9e18);
-//        assertEq(pair.reserve1, 4 ether);
-//        assertEq(pair.totalSupply, 6 ether);
+        assertEq(pair.reserve1(), 9 ether);
+        assertEq(pair.reserve0(), 4 ether);
+        assertEq(pair.totalSupply(), 6 ether);
 
         vm.prank(LP2);
+        token0.transfer(address(pair), 9 ether);
+        vm.prank(LP2);
+        token1.transfer(address(pair), 6 ether);
+        vm.prank(LP2);
+        pair.mint();
+
+        // Assets that the mininum # of LP tokens are returned
+        assertEq(pair.balanceOf(LP2), 4 ether);
+        assertEq(pair.reserve1(), 15 ether);
+        assertEq(pair.reserve0(), 13 ether);
+        assertEq(pair.totalSupply(), 10 ether);
     }
 }
