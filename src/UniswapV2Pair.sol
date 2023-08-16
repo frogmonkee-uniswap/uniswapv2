@@ -11,6 +11,10 @@ interface IERC20 {
 
 error InsufficientLiquidityMinted();
 error InsufficientLiquidityBurned();
+error InsufficientOutputAmount();
+error InsufficientLiquidity();
+error InvalidK();
+error TransferFailed();
 
 contract UniswapV2Pair is ERC20, Math {
   uint public reserve0;
@@ -21,10 +25,31 @@ contract UniswapV2Pair is ERC20, Math {
 
   event Mint(address indexed sender, uint256 amount0, uint256 amount1);
   event Burn(address indexed sender, uint256 amount0, uint256 amount1);
+  event Swap(address indexed sender, uint256 amount0Out, uint256 amount1Out, address indexed to);
 
   constructor(address _token0, address _token1) ERC20("UniswapV2Pair", "UniV2", 18) {
     token0 = _token0;
     token1 = _token1;
+  }
+
+  // Function is not opinionated about the direction of the swap. Does not specify input/output tokens
+  function swap(uint256 amount0Out, uint256 amount1Out, address to) public {
+    if(amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
+    (uint256 _reserve0, uint256 _reserve1) = getReserves();
+    if(amount0Out > _reserve0 || amount1Out > _reserve1) revert InsufficientLiquidity();
+
+    uint256 balance0 = IERC20(token0).balanceOf(address(this)) - amount0Out;
+    uint256 balance1 = IERC20(token1).balanceOf(address(this)) - amount1Out;
+    // Maintains that x * y = k of new reserves is greater than old reserves
+    if(balance0 * balance1 < _reserve0 * _reserve1) revert InvalidK();
+
+    // Run test to make sure that reserves are properly udpated
+    _update(_reserve0, _reserve1);
+
+    if(amount0Out > 0) _safeTransfer(token0, to, amount0Out);
+    if(amount1Out > 0) _safeTransfer(token1, to, amount1Out);
+
+    emit Swap(msg.sender, amount0Out, amount1Out, to);
   }
 
   function mint() public {
@@ -63,8 +88,8 @@ contract UniswapV2Pair is ERC20, Math {
 
     _burn(msg.sender, liquidity);
 
-    IERC20(token0).transfer(msg.sender, amount0);
-    IERC20(token1).transfer(msg.sender, amount1);
+    _safeTransfer(token0, msg.sender, amount0);
+    _safeTransfer(token1, msg.sender, amount1);
 
     balance0 = IERC20(token0).balanceOf(address(this));
     balance1 = IERC20(token1).balanceOf(address(this));
@@ -74,8 +99,24 @@ contract UniswapV2Pair is ERC20, Math {
     emit Burn(msg.sender, amount0, amount1);
   }
 
+  function getReserves() public view returns (uint256, uint256) {
+    return (reserve0, reserve1);
+  }
+
   function _update(uint256 _balance0, uint256 _balance1) private {
     reserve0 = _balance0;
     reserve1 = _balance1;
   }
+
+  function _safeTransfer(
+        address token,
+        address to,
+        uint256 value
+    ) private {
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSignature("transfer(address,uint256)", to, value)
+        );
+        if (!success || (data.length != 0 && !abi.decode(data, (bool))))
+            revert TransferFailed();
+    }
 }
