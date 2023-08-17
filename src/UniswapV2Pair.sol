@@ -23,6 +23,14 @@ contract UniswapV2Pair is ERC20, Math {
   address public token1;
   uint256 constant MINIMUM_LIQUIDITY = 1000;
 
+  bool private locked = false;
+  modifier lock() {
+    require(locked != true, "Function locked");
+    locked = true;
+    _;
+    locked = false;
+  }
+
   event Mint(address indexed sender, uint256 amount0, uint256 amount1);
   event Burn(address indexed sender, uint256 amount0, uint256 amount1);
   event Swap(address indexed sender, uint256 amount0Out, uint256 amount1Out, address indexed to);
@@ -33,7 +41,7 @@ contract UniswapV2Pair is ERC20, Math {
   }
 
   // Function is not opinionated about the direction of the swap. Does not specify input/output tokens
-  function swap(uint256 amount0Out, uint256 amount1Out, address to) public {
+  function swap(uint256 amount0Out, uint256 amount1Out, address to) lock public {
     if(amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
     // Store old reserves
     (uint256 _reserve0, uint256 _reserve1) = getReserves();
@@ -54,7 +62,7 @@ contract UniswapV2Pair is ERC20, Math {
     emit Swap(msg.sender, amount0Out, amount1Out, to);
   }
 
-  function mint() public {
+  function mint() lock public {
     uint256 liquidity;
     uint256 balance0 = IERC20(token0).balanceOf(address(this));
     uint256 balance1 = IERC20(token1).balanceOf(address(this)); 
@@ -79,7 +87,7 @@ contract UniswapV2Pair is ERC20, Math {
     emit Mint(msg.sender, amount0, amount1);
   }
 
-  function burn() public {
+  function burn() lock public {
     uint256 liquidity = balanceOf[msg.sender];
     uint256 balance0 = IERC20(token0).balanceOf(address(this));
     uint256 balance1 = IERC20(token1).balanceOf(address(this));
