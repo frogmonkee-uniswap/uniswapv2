@@ -20,6 +20,7 @@ contract MintBurnTest is Test {
         pair = new UniswapV2Pair(address(token0), address(token1));
         swapper = makeAddr("swapper");
         token0.mint(address(swapper), 2 ether);
+        token1.mint(address(swapper), 2 ether);
         LP1 = makeAddr("LP1");
         token0.mint(address(LP1), 4 ether);
         token1.mint(address(LP1), 9 ether);
@@ -34,7 +35,7 @@ contract MintBurnTest is Test {
 
     }
 
-    function testSwap() public {
+    function testOneWaySwap() public {
         vm.prank(swapper);
         token0.transfer(address(pair), 2 ether);
         // Assert that balance of token0 has updated
@@ -43,12 +44,29 @@ contract MintBurnTest is Test {
         assertEq(pair.reserve0(), 4 ether);
         vm.prank(swapper);
         pair.swap(0, 3 ether, address(swapper));
-        // Assert that swapper has been transferred 3e18 of token1 after swap
-        assertEq(token1.balanceOf(swapper), 3 ether);
+        // Assert that swapper has been transferred 3e18 of token1 after swap (initial balance of 2e18)
+        assertEq(token1.balanceOf(swapper), 5 ether);
+
         // Assert that reserves have been updated
         (uint _reserve0, uint _reserve1) = pair.getReserves();
         assertEq(_reserve0, 6 ether);
         assertEq(_reserve1, 6 ether);
+    }
+
+        // Test situation when swapping both tokens for each other
+        function testTwoWaySwap() public {
+        vm.prank(swapper);
+        token0.transfer(address(pair), 2 ether);
+        vm.prank(swapper);
+        token1.transfer(address(pair), 2 ether);
+        vm.prank(swapper);
+        // Expects 1 ether of token0Out and 3 ether of token1Out
+        pair.swap(1 ether, 3 ether, address(swapper));
+        assertEq(token1.balanceOf(swapper), 3 ether);
+        assertEq(token0.balanceOf(swapper), 1 ether);
+        (uint _reserve0, uint _reserve1) = pair.getReserves();
+        assertEq(_reserve0, 5 ether);
+        assertEq(_reserve1, 8 ether);
     }
 
     function testSwapRevertInvalidK() public {
