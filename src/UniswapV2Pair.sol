@@ -35,16 +35,18 @@ contract UniswapV2Pair is ERC20, Math {
   // Function is not opinionated about the direction of the swap. Does not specify input/output tokens
   function swap(uint256 amount0Out, uint256 amount1Out, address to) public {
     if(amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
+    // Store old reserves
     (uint256 _reserve0, uint256 _reserve1) = getReserves();
     if(amount0Out > _reserve0 || amount1Out > _reserve1) revert InsufficientLiquidity();
 
+    // Calculate new reserves, once amountOut has been transfered
     uint256 balance0 = IERC20(token0).balanceOf(address(this)) - amount0Out;
     uint256 balance1 = IERC20(token1).balanceOf(address(this)) - amount1Out;
-    // Maintains that x * y = k of new reserves is greater than old reserves
+    // Note: the product of reserves after a swap must be equal or greater than that before the swap
+    // Checks if x * y = k of old reserves if greater than new reserve. If so, revert
     if(balance0 * balance1 < _reserve0 * _reserve1) revert InvalidK();
 
-    // Run test to make sure that reserves are properly udpated
-    _update(_reserve0, _reserve1);
+    _update(balance0, balance1);
 
     if(amount0Out > 0) _safeTransfer(token0, to, amount0Out);
     if(amount1Out > 0) _safeTransfer(token1, to, amount1Out);
