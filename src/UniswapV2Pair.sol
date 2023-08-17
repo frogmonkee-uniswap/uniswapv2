@@ -17,12 +17,14 @@ error InvalidK();
 error TransferFailed();
 
 contract UniswapV2Pair is ERC20, Math {
-  uint public reserve0;
-  uint public reserve1;
+
+  uint256 constant MINIMUM_LIQUIDITY = 1000;
   address public token0;
   address public token1;
-  uint256 constant MINIMUM_LIQUIDITY = 1000;
+  uint public reserve0;
+  uint public reserve1;
 
+  // Reentrancy guard
   bool private locked = false;
   modifier lock() {
     require(locked != true, "Function locked");
@@ -113,9 +115,9 @@ contract UniswapV2Pair is ERC20, Math {
     return (reserve0, reserve1);
   }
 
-  function _update(uint256 _balance0, uint256 _balance1) private {
-    reserve0 = _balance0;
-    reserve1 = _balance1;
+  function _update(uint256 _balance0, uint256 _balance1) private {    
+    reserve0 = uint112(_balance0);
+    reserve1 = uint112(_balance1);
   }
 
   function _safeTransfer(
@@ -123,7 +125,10 @@ contract UniswapV2Pair is ERC20, Math {
         address to,
         uint256 value
     ) private {
+        // Call is a low level EVM address method to ensure we can a bool result after transfer is called
+        // https://docs.soliditylang.org/en/latest/types.html#members-of-addresses
         (bool success, bytes memory data) = token.call(
+            // ABI call that matches transfer(address,uint256)
             abi.encodeWithSignature("transfer(address,uint256)", to, value)
         );
         if (!success || (data.length != 0 && !abi.decode(data, (bool))))
