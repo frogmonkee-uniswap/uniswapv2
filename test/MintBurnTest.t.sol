@@ -16,7 +16,8 @@ contract MintBurnTest is Test {
     function setUp() public {
         token0 = new ERC20Mintable("frogmonkee", "FROG");
         token1 = new ERC20Mintable("monkeefrog", "GROF");
-        pair = new UniswapV2Pair(address(token0), address(token1));
+        pair = new UniswapV2Pair();
+        pair.initialize(address(token0), address(token1));
         LP1 = makeAddr("LP1");
         token0.mint(address(LP1), 4 ether);
         token1.mint(address(LP1), 9 ether);

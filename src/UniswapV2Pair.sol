@@ -15,6 +15,7 @@ error InsufficientOutputAmount();
 error InsufficientLiquidity();
 error InvalidK();
 error TransferFailed();
+error AlreadyInitialized();
 
 contract UniswapV2Pair is ERC20, Math {
 
@@ -37,10 +38,14 @@ contract UniswapV2Pair is ERC20, Math {
   event Burn(address indexed sender, uint256 amount0, uint256 amount1);
   event Swap(address indexed sender, uint256 amount0Out, uint256 amount1Out, address indexed to);
 
-  constructor(address _token0, address _token1) ERC20("UniswapV2Pair", "UniV2", 18) {
-    token0 = _token0;
-    token1 = _token1;
-  }
+  constructor() ERC20("UniswapV2Pair", "UniV2", 18) {}
+
+  function initialize(address _token0, address _token1) public {
+        if (token0 != address(0) || token1 != address(0))
+            revert AlreadyInitialized();
+        token0 = _token0;
+        token1 = _token1;
+    }
 
   // Function is not opinionated about the direction of the swap. Does not specify input/output tokens
   function swap(uint256 amount0Out, uint256 amount1Out, address to) lock public {
