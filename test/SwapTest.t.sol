@@ -11,7 +11,6 @@ contract MintBurnTest is Test {
     ERC20Mintable token1;
     UniswapV2Pair pair;
     address LP1;
-//    address LP2;
     address swapper;
 
     function setUp() public {
@@ -32,8 +31,6 @@ contract MintBurnTest is Test {
         token1.transfer(address(pair), 9 ether);
         vm.prank(LP1);
         pair.mint();
-
-
     }
 
     function testOneWaySwap() public {

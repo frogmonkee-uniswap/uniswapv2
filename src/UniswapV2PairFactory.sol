@@ -31,7 +31,7 @@ contract UniswapV2PairFactory {
             pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
 
-        IUniswapv2Pair(pair).initialize(token0, token1);
+        IUniswapV2Pair(pair).initialize(token0, token1);
         pairs[token0][token1] = pair;
         pairs[token1][token0] = pair;
         allPairs.push(pair);
