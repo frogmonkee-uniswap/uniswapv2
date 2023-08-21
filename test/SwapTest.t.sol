@@ -30,7 +30,7 @@ contract MintBurnTest is Test {
         vm.prank(LP1);
         token1.transfer(address(pair), 9 ether);
         vm.prank(LP1);
-        pair.mint();
+        pair.mint(LP1);
     }
 
     function testOneWaySwap() public {

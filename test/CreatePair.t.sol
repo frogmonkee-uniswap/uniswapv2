@@ -36,7 +36,7 @@ contract CreatePair is Test {
         vm.prank(LP1);
         token1.transfer(address(pair), 9 ether);
         vm.prank(LP1);        
-        pair.mint();
+        pair.mint(LP1);
 
         assertEq(pair.balanceOf(LP1), 6 ether - 1000);
         assertEq(pair.reserve1(), 4 ether);
@@ -48,7 +48,7 @@ contract CreatePair is Test {
         vm.prank(LP2);
         token1.transfer(address(pair), 6 ether);
         vm.prank(LP2);
-        pair.mint();
+        pair.mint(LP2);
 
         // Assets that the mininum # of LP tokens are returned
         assertEq(pair.balanceOf(LP2), 4 ether);
@@ -63,5 +63,10 @@ contract CreatePair is Test {
         // Not 9 ETH bc LP2 provided lopsided liquidity and only got LP tokens based on 6e18 of token1
         assertEq(token0.balanceOf(LP2), 5.2 ether);
         assertEq(token1.balanceOf(LP2), 6 ether);
+    }
+
+    function testCreatePairRevertIdentiticalAddresses() public {
+        vm.expectRevert();
+        factory.createPair(address(token1), address(token1));
     }
 }

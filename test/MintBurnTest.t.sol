@@ -32,7 +32,7 @@ contract MintBurnTest is Test {
         vm.prank(LP1);
         token1.transfer(address(pair), 9 ether);
         vm.prank(LP1);        
-        pair.mint();
+        pair.mint(LP1);
 
         assertEq(pair.balanceOf(LP1), 6 ether - 1000);
         assertEq(pair.reserve1(), 9 ether);
@@ -44,7 +44,7 @@ contract MintBurnTest is Test {
         vm.prank(LP2);
         token1.transfer(address(pair), 6 ether);
         vm.prank(LP2);
-        pair.mint();
+        pair.mint(LP2);
 
         // Assets that the mininum # of LP tokens are returned
         assertEq(pair.balanceOf(LP2), 4 ether);

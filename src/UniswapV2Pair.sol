@@ -69,8 +69,7 @@ contract UniswapV2Pair is ERC20, Math {
     emit Swap(msg.sender, amount0Out, amount1Out, to);
   }
 
-  function mint() lock public {
-    uint256 liquidity;
+  function mint(address to) lock public returns(uint256 liquidity) {
     uint256 balance0 = IERC20(token0).balanceOf(address(this));
     uint256 balance1 = IERC20(token1).balanceOf(address(this)); 
     uint256 amount0 = balance0 - reserve0;
@@ -88,10 +87,11 @@ contract UniswapV2Pair is ERC20, Math {
 
     if (liquidity <= 0) revert InsufficientLiquidityMinted();
 
-    _mint(msg.sender, liquidity);
+    _mint(to, liquidity);
     _update(balance0, balance1);
 
-    emit Mint(msg.sender, amount0, amount1);
+    emit Mint(to, amount0, amount1);
+    return (liquidity);
   }
 
   function burn() lock public {
