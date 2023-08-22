@@ -55,9 +55,6 @@ contract RouterTest is Test {
         assertEq(LP1amountB, 9e18);
         assertEq(LP1liquidity, 6e18 - 1000);
 
-//        UniswapV2Pair pair = UniswapV2Pair(pairAddress);
-//        console.log("Total Supply : " , pair.totalSupply());
-
         vm.prank(LP2);
         token0.approve(address(router), 9 ether);
         vm.prank(LP2);
@@ -66,13 +63,5 @@ contract RouterTest is Test {
         (, uint256 LP2amountB, uint256 LP2liquidity) = router.addLiquidity(address(token0), address(token1), 9 ether, 6 ether, 1 ether, 1 ether, LP2);
         assertEq(LP2amountB, 6e18);
         assertEq(LP2liquidity, 4e18 - 1);
-//        console.log(LP2amountA);
-//        console.log(LP2amountB);
-//        console.log(LP2liquidity);
-//        console.log("Token 0: " , token0.balanceOf(LP2));
-//        console.log("Token 1: " , token1.balanceOf(LP2));
-//        console.log("Total Supply : " , pair.totalSupply());
-
-
     }
 }
