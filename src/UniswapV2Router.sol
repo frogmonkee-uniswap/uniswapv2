@@ -9,6 +9,7 @@ error SafeTransferFailed();
 
 contract Uniswapv2PairRouter {
     IUniswapV2PairFactory factory;
+    
 
     constructor(address factoryAddress) {
         factory = IUniswapV2PairFactory(factoryAddress);
@@ -30,6 +31,7 @@ contract Uniswapv2PairRouter {
         if (factory.pairs(tokenA, tokenB) == address(0)) {
             factory.createPair(tokenA, tokenB);
         }
+        
         // Returns numebr of tokenA and tokenB we need to deposit according to x*y=k
         (amountA, amountB) = _calculateLiquidity(
             tokenA,

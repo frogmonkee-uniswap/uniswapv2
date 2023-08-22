@@ -3,10 +3,10 @@ pragma solidity ^0.8.10;
 
 import "src/interfaces/IUniswapv2Pair.sol";
 import "src/interfaces/IUniswapv2PairFactory.sol";
-import {UniswapV2Pair} from "src/UniswapV2Pair.sol";
+import "src/UniswapV2Pair.sol";
 
 library UniswapV2Library {
-    error InsufficientLiquidity();
+//    error InsufficientLiquidity();
     error InsufficientAmount();
 
     function getReserves(
