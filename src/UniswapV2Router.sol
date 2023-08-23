@@ -66,6 +66,28 @@ contract Uniswapv2PairRouter {
         if (amountB < amountBMin) revert InsufficientBAmount();
     }
 
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to
+    ) public returns(uint256[] memory amounts) {
+        amounts = UniswapV2Library.getAmountsOut(
+            address(factory),
+            amountIn,
+            path
+        );
+        // Checks the final amount in array is greater than the minimum amount we want to receive
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
+        _safeTransferFrom(
+            path[0],
+            msg.sender,
+            UniswapV2Library.pairFor(address(factory), path[0], path[1]),
+            amounts[0]);
+
+        _swap(amounts, path, to);
+    }
+
     function _calculateLiquidity(
         address tokenA,
         address tokenB,
@@ -118,6 +140,26 @@ contract Uniswapv2PairRouter {
                 }
             }
         }
+    
+    function _swap(
+            uint256[] memory amounts, 
+            address[] memory path, 
+            address to_) internal {
+                for(uint256 i; i < path.length - 1; i++) {
+                    (address input, address output) = (path[i], path[i+1]);
+                    (address token0, ) = UniswapV2Library.sortTokens(input, output);
+                    uint256 amountOut = amounts[i + 1];
+                    (uint256 amount0Out, uint256 amount1Out) = input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
+                    address to = i < path.length - 2 ? UniswapV2Library.pairFor(address(factory), output, path[i + 2]) : to_; 
+                    IUniswapV2Pair(UniswapV2Library.pairFor(address(factory), input, output)).swap(
+                        amount0Out,
+                        amount1Out,
+                        to,
+                        ""
+                    );
+                }
+            }
+
     function _safeTransferFrom(
         address token,
         address from,
