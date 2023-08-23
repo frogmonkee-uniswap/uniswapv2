@@ -9,6 +9,7 @@ error SafeTransferFailed();
 
 contract Uniswapv2PairRouter {
     IUniswapV2PairFactory factory;
+    IUniswapV2Pair pair;
     
 
     constructor(address factoryAddress) {
@@ -45,6 +46,24 @@ contract Uniswapv2PairRouter {
         _safeTransferFrom(tokenA, msg.sender, pairAddress, amountA);
         _safeTransferFrom(tokenB, msg.sender, pairAddress, amountB);
         liquidity = IUniswapV2Pair(pairAddress).mint(to);
+    }
+
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        // Amount of LP tokens to burn
+        uint256 liquidity,
+        // Minimal # of tokens. Protects against slippage
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to
+    ) public returns(uint256 amountA, uint256 amountB) {
+        address pairAddress = UniswapV2Library.pairFor(address(factory), tokenA, tokenB);
+        pair = IUniswapV2Pair(pairAddress);
+        pair.transferFrom(msg.sender, pairAddress, liquidity);
+        (amountA, amountB) = pair.burn(to);
+        if (amountA < amountAMin) revert InsufficientAAmount();
+        if (amountB < amountBMin) revert InsufficientBAmount();
     }
 
     function _calculateLiquidity(

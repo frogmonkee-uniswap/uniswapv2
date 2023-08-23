@@ -13,6 +13,7 @@ contract RouterTest is Test {
     ERC20Mintable token1;
     Uniswapv2PairRouter router;
     UniswapV2PairFactory factory;
+    IUniswapV2Pair Ipair;
     address LP1;
     address LP2;
     address swapper;
@@ -43,7 +44,7 @@ contract RouterTest is Test {
         assertEq(liquidity, 6e18 - 1000);
     }
 
-    function testAddLiquidity() public {
+    function testAddRemoveLiquidity() public {
         pairAddress = factory.createPair(address(token0), address(token1));        
         vm.prank(LP1);
         token0.approve(address(router), 4 ether);
@@ -63,5 +64,13 @@ contract RouterTest is Test {
         (, uint256 LP2amountB, uint256 LP2liquidity) = router.addLiquidity(address(token0), address(token1), 9 ether, 6 ether, 1 ether, 1 ether, LP2);
         assertEq(LP2amountB, 6e18);
         assertEq(LP2liquidity, 4e18 - 1);
+
+        UniswapV2Pair pair = UniswapV2Pair(pairAddress);
+        vm.prank(LP2);
+        pair.approve(address(router), LP2liquidity);
+        vm.prank(LP2);
+        (uint256 amountA, uint256 amountB) = router.removeLiquidity(address(token0), address(token1), LP2liquidity, 5 ether, 2 ether, LP2);
+        assertEq(amountA, 6e18 - 1);
+        assertEq(amountB, 2666666666666666666);
     }
 }
