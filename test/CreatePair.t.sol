@@ -58,7 +58,11 @@ contract CreatePair is Test {
 
 
         vm.prank(LP2);
-        pair.burn();
+        uint256 liquidity = pair.balanceOf(address(LP2));
+        vm.prank(LP2);
+        pair.transfer(address(pair), liquidity);
+        vm.prank(LP2);
+        pair.burn(address(LP2));
         assertEq(pair.balanceOf(LP2), 0);
         // Not 9 ETH bc LP2 provided lopsided liquidity and only got LP tokens based on 6e18 of token1
         assertEq(token0.balanceOf(LP2), 5.2 ether);

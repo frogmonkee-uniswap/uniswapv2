@@ -6,7 +6,7 @@ import "lib/forge-std/src/console.sol";
 import "src/UniswapV2Pair.sol";
 import "./mocks/ERC20Mintable.sol";
 
-contract MintBurnTest is Test {
+contract SwapTest is Test {
     ERC20Mintable token0;
     ERC20Mintable token1;
     UniswapV2Pair pair;
