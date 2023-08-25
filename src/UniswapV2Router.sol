@@ -111,22 +111,18 @@ contract Uniswapv2PairRouter {
         _swap(amounts, path, to);
     }
 
-    }
-
+        // amountDesired = Amount of token A & token B we want to deposit. Upper bound.
+        // This is in place of the user manualy transfering tokens into the pair contract (see SwapTest.t.sol)
+        // amountMin = Minimum amounts of tokens A & B we want to deposit. The lower amount determines LP tokens
+        // See `mint` function in UniswapV2Pair.sol
     function _calculateLiquidity(
         address tokenA,
         address tokenB,
-        // Amount of token A & token B we want to deposit. Upper bound.
-        // This is in place of the user manualy transfering tokens into the pair contract (see SwapTest.t.sol)
         uint256 amountADesired,
         uint256 amountBDesired,
-        // Minimum amounts of tokens A & B we want to deposit. The lower amount determines LP tokens
-        // See `mint` function in UniswapV2Pair.sol
         uint256 amountAMin,
-        uint256 amountBMin) internal returns(
-            uint256 amountA,
-            uint256 amountB
-        ) {
+        uint256 amountBMin
+        ) internal returns(uint256 amountA, uint256 amountB) {
             // Need to call library for getReserves instead of directly in UniswapV2Pair.sol contract bc...
             // ... the pair address is not known
             (uint256 reserveA, uint256 reserveB) = UniswapV2Library.getReserves(
@@ -202,3 +198,4 @@ contract Uniswapv2PairRouter {
             if (!success || (data.length != 0 && !abi.decode(data, (bool))))
                 revert SafeTransferFailed();
         }
+}
