@@ -163,7 +163,7 @@ contract Uniswapv2PairRouter {
         }
     
     function _swap(
-            uint256[] memory amounts, 
+            uint256[] memory amounts,
             address[] memory path, 
             address to_) internal {
                 for(uint256 i; i < path.length - 1; i++) {

@@ -108,6 +108,7 @@ contract RouterTest is Test {
         assertEq(Pair2Token1, 10e18);
         assertEq(Pair2Token2, 20e18);
 
+        // Swap in 1e18 token0 and out X token2
         address[] memory path = new address[](3);
         path[0] = address(token0);
         path[1] = address(token1);
@@ -120,4 +121,47 @@ contract RouterTest is Test {
         // Assert that swapper receives token2
         assertEq(token2.balanceOf(swapper), 909090909090909090);
     }
+
+    // Inverse flow of testSwapExactTokensForTokens. Exact output is 909090909090909090 and expecitng input as 1e18
+    function testSwapTokensForExactTokens() public {
+        // Pair1 = Token0 (20) <> Token1 (10)
+        // Pair2 = Token1 (10) <> Token2 (20)
+        factory.createPair(address(token0), address(token1));
+        factory.createPair(address(token1), address(token2));
+
+        // Seed Pair1 liquidity with 20e18 token0 and 10e18 token1
+        vm.prank(LP1);
+        token0.approve(address(router), 20 ether);
+        vm.prank(LP1);
+        token1.approve(address(router), 10 ether);
+        vm.prank(LP1);
+        (uint256 Pair1Token0, uint256 Pair1Token1, ) = router.addLiquidity(address(token0), address(token1), 1 ether, 1 ether, 1 ether, 1 ether, LP1);
+        assertEq(Pair1Token0, 1e18);
+        assertEq(Pair1Token1, 1e18);
+
+        // Seed Pair2 liquidity with 10e18 token1 and 20e18 token2
+        vm.prank(LP1);
+        token1.approve(address(router), 10 ether);
+        vm.prank(LP1);
+        token2.approve(address(router), 20 ether);
+        vm.prank(LP1);
+        (uint256 Pair2Token1, uint256 Pair2Token2, ) = router.addLiquidity(address(token1), address(token2), 1 ether, 1 ether, 1 ether, 1 ether, LP1);
+        assertEq(Pair2Token1, 1e18);
+        assertEq(Pair2Token2, 1e18);
+
+        // Swap in X token0 and out 909090909090909090 token 2
+        vm.prank(swapper);
+        token0.approve(address(router), 0.3e18);
+        address[] memory path = new address[](3);
+        path[0] = address(token0);
+        path[1] = address(token1);
+        path[2] = address(token2);
+        vm.prank(swapper);
+        router.swapTokensForExactTokens(0.186691414219734305 ether, 0.3 ether, path, swapper);
+        // Assert that swapper receives token2
+        console.log(token0.balanceOf(swapper));
+
+
+    }
+
 }

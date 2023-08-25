@@ -4,10 +4,14 @@ pragma solidity ^0.8.10;
 import "src/interfaces/IUniswapv2Pair.sol";
 import "src/interfaces/IUniswapv2PairFactory.sol";
 import "src/UniswapV2Pair.sol";
+import "lib/forge-std/src/Test.sol";
+import "lib/forge-std/src/console.sol";
+
 
 library UniswapV2Library {
 //    error InsufficientLiquidity();
     error InsufficientAmount();
+    error InsufficientAmount1();
     error InvalidPath();
 
     function getReserves(
@@ -27,7 +31,7 @@ library UniswapV2Library {
         return tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
     }
 
-    function pairFor(address tokenFactory, address tokenA, address tokenB) internal pure returns (address pairdAdress) {
+    function pairFor(address tokenFactory, address tokenA, address tokenB) internal pure returns (address pairAdress) {
         return IUniswapV2PairFactory(tokenFactory).pairs(address(tokenA), address(tokenB));
     }
 
@@ -76,7 +80,6 @@ library UniswapV2Library {
             (uint256 reserve0, uint256 reserve1) = getReserves(factoryAddress, path[i], path[i + 1]);
             amounts[i+1] = getAmountOut(amounts[i], reserve0, reserve1);
         }
-        return amounts;
     }
 
     function getAmountIn(
@@ -84,7 +87,7 @@ library UniswapV2Library {
         uint256 reserveIn,
         uint256 reserveOut
     ) public pure returns(uint256) {
-        if (amountOut == 0) revert InsufficientAmount();
+        if (amountOut == 0) revert InsufficientAmount1();
         if (reserveIn == 0 || reserveOut == 0) revert InsufficientLiquidity();
         return ((reserveIn * amountOut) / (reserveOut - amountOut));
     }
@@ -102,10 +105,14 @@ library UniswapV2Library {
         amounts[amounts.length - 1] = amountOut;
         // Iteratively calls getAmountOut for each token in path to build an array of output amounts.
         // i > 0 and not i == 0 because amounts[lastElement] is already has a value
+        
         for(uint i = path.length - 1; i > 0; i--) {
             (uint256 reserve0, uint256 reserve1) = getReserves(factoryAddress, path[i-1], path[i]);
-            amounts[i-1] = getAmountOut(amounts[i], reserve0, reserve1);
+            amounts[i-1] = getAmountIn(amounts[i], reserve0, reserve1);
         }
+        console.log("Element 1: " , amounts[0]);
+        console.log("Element 2: " , amounts[1]);
+        console.log("Element 3: " , amounts[2]);
         return amounts;
     }
 }
