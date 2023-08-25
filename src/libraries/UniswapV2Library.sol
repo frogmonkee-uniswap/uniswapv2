@@ -49,14 +49,19 @@ library UniswapV2Library {
     ) public pure returns(uint256) {
         if (amountIn == 0) revert InsufficientAmount();
         if (reserveIn == 0 || reserveOut == 0) revert InsufficientLiquidity();
+       return ((amountIn * reserveOut) / (reserveIn + amountIn));
+/*
         // Fee is 0.3% = 3/1000
         uint256 amountInWithFee = amountIn * 997;
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = (reserveIn * 1000) + amountInWithFee;
         return (numerator / denominator) + 1;
+*/
+
     }
 
     // Multiple paths
+
     function getAmountsOut(
         address factoryAddress,
         uint256 amountIn,
@@ -69,7 +74,37 @@ library UniswapV2Library {
         // Iteratively calls getAmountOut for each token in path to build an array of output amounts.
         for(uint i; i < path.length - 1; i++) {
             (uint256 reserve0, uint256 reserve1) = getReserves(factoryAddress, path[i], path[i + 1]);
-            amounts[i+1] = getAmountOut(amountIn, reserve0, reserve1);
+            amounts[i+1] = getAmountOut(amounts[i], reserve0, reserve1);
+        }
+        return amounts;
+    }
+
+    function getAmountIn(
+        uint256 amountOut,
+        uint256 reserveIn,
+        uint256 reserveOut
+    ) public pure returns(uint256) {
+        if (amountOut == 0) revert InsufficientAmount();
+        if (reserveIn == 0 || reserveOut == 0) revert InsufficientLiquidity();
+        return ((reserveIn * amountOut) / (reserveOut - amountOut));
+    }
+
+        // Single path
+    function getAmountsIn(
+        address factoryAddress,
+        uint256 amountOut,
+        address[] memory path
+    ) public returns(uint256[] memory) {
+        // Check to make sure there are at least 2 tokens in the path
+        if (path.length < 2) revert InvalidPath();
+        // Init return type with an array for each token in path
+        uint256[] memory amounts = new uint256[](path.length);
+        amounts[amounts.length - 1] = amountOut;
+        // Iteratively calls getAmountOut for each token in path to build an array of output amounts.
+        // i > 0 and not i == 0 because amounts[lastElement] is already has a value
+        for(uint i = path.length - 1; i > 0; i--) {
+            (uint256 reserve0, uint256 reserve1) = getReserves(factoryAddress, path[i-1], path[i]);
+            amounts[i-1] = getAmountOut(amounts[i], reserve0, reserve1);
         }
         return amounts;
     }

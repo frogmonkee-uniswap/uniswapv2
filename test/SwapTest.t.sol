@@ -41,7 +41,7 @@ contract SwapTest is Test {
         // Assert that pair reserves have not udpated
         assertEq(pair.reserve0(), 4 ether);
         vm.prank(swapper);
-        pair.swap(0, 3 ether, address(swapper));
+        pair.swap(0, 3 ether, address(swapper), "");
         // Assert that swapper has been transferred 3e18 of token1 after swap (initial balance of 2e18)
         assertEq(token1.balanceOf(swapper), 5 ether);
 
@@ -59,7 +59,7 @@ contract SwapTest is Test {
         token1.transfer(address(pair), 2 ether);
         vm.prank(swapper);
         // Expects 1 ether of token0Out and 3 ether of token1Out
-        pair.swap(1 ether, 3 ether, address(swapper));
+        pair.swap(1 ether, 3 ether, address(swapper), "");
         assertEq(token1.balanceOf(swapper), 3 ether);
         assertEq(token0.balanceOf(swapper), 1 ether);
         (uint _reserve0, uint _reserve1) = pair.getReserves();
@@ -72,7 +72,7 @@ contract SwapTest is Test {
         token0.transfer(address(pair), 2 ether);
         vm.expectRevert();
         vm.prank(swapper);
-        pair.swap(0, 4 ether, address(swapper));
+        pair.swap(0, 4 ether, address(swapper), "");
     }
 
     function testSwapRevertInsufficientLiquidity() public {
@@ -80,6 +80,6 @@ contract SwapTest is Test {
         token0.transfer(address(pair), 2 ether);
         vm.expectRevert();
         vm.prank(swapper);
-        pair.swap(0, 11 ether, address(swapper));
+        pair.swap(0, 11 ether, address(swapper), "");
     }
 }

@@ -11,25 +11,33 @@ import "src/UniswapV2PairFactory.sol";
 contract RouterTest is Test {
     ERC20Mintable token0;
     ERC20Mintable token1;
+    ERC20Mintable token2;
     Uniswapv2PairRouter router;
     UniswapV2PairFactory factory;
-    IUniswapV2Pair Ipair;
+    
     address LP1;
     address LP2;
     address swapper;
-    address pairAddress;
 
     function setUp() public {
+        // Init contracts
         factory = new UniswapV2PairFactory();
         router = new Uniswapv2PairRouter(address(factory));
         token0 = new ERC20Mintable("frogmonkee", "FROG");
         token1 = new ERC20Mintable("monkeefrog", "GROF");
+        token2 = new ERC20Mintable("DeezNuts" , "NUTS");
+        // Init LP1
         LP1 = makeAddr("LP1");
-        token0.mint(address(LP1), 4 ether);
-        token1.mint(address(LP1), 9 ether);
+        token0.mint(address(LP1), 20 ether);
+        token1.mint(address(LP1), 20 ether);
+        token2.mint(address(LP1), 20 ether);
+        // Init LP2
         LP2 = makeAddr("LP2");
-        token0.mint(address(LP2), 9 ether);
-        token1.mint(address(LP2), 6 ether);
+        token0.mint(address(LP2), 20 ether);
+        token1.mint(address(LP2), 20 ether);
+        // Init swapper
+        swapper = makeAddr("swapper");
+        token0.mint(address(swapper), 1 ether);
     }
 
     function testPairCreation() public {
@@ -45,7 +53,7 @@ contract RouterTest is Test {
     }
 
     function testAddRemoveLiquidity() public {
-        pairAddress = factory.createPair(address(token0), address(token1));        
+        address pairAddress = factory.createPair(address(token0), address(token1));        
         vm.prank(LP1);
         token0.approve(address(router), 4 ether);
         vm.prank(LP1);
@@ -72,5 +80,44 @@ contract RouterTest is Test {
         (uint256 amountA, uint256 amountB) = router.removeLiquidity(address(token0), address(token1), LP2liquidity, 5 ether, 2 ether, LP2);
         assertEq(amountA, 6e18 - 1);
         assertEq(amountB, 2666666666666666666);
+    }
+
+    function testSwapExactTokensForTokens() public {
+        // Pair1 = Token0 (20) <> Token1 (10)
+        // Pair2 = Token1 (10) <> Token2 (20)
+        factory.createPair(address(token0), address(token1));
+        factory.createPair(address(token1), address(token2));
+        
+        // Seed Pair1 liquidity
+        vm.prank(LP1);
+        token0.approve(address(router), 20 ether);
+        vm.prank(LP1);
+        token1.approve(address(router), 10 ether);
+        vm.prank(LP1);
+        (uint256 Pair1Token0, uint256 Pair1Token1, ) = router.addLiquidity(address(token0), address(token1), 20 ether, 10 ether, 20 ether, 10 ether, LP1);
+        assertEq(Pair1Token0, 20e18);
+        assertEq(Pair1Token1, 10e18);
+
+        // Seed Pair2 liquidity
+        vm.prank(LP1);
+        token1.approve(address(router), 10 ether);
+        vm.prank(LP1);
+        token2.approve(address(router), 20 ether);
+        vm.prank(LP1);
+        (uint256 Pair2Token1, uint256 Pair2Token2, ) = router.addLiquidity(address(token1), address(token2), 10 ether, 20 ether, 10 ether, 20 ether, LP1);
+        assertEq(Pair2Token1, 10e18);
+        assertEq(Pair2Token2, 20e18);
+
+        address[] memory path = new address[](3);
+        path[0] = address(token0);
+        path[1] = address(token1);
+        path[2] = address(token2);
+        vm.prank(swapper);
+        token0.approve(address(router), 1 ether);
+        vm.prank(swapper);
+        router.swapExactTokensForTokens( 1e18,0, path, swapper);
+        
+        // Assert that swapper receives token2
+        assertEq(token2.balanceOf(swapper), 909090909090909090);
     }
 }

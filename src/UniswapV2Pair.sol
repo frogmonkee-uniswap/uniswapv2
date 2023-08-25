@@ -48,7 +48,7 @@ contract UniswapV2Pair is ERC20, Math {
     }
 
   // Function is not opinionated about the direction of the swap. Does not specify input/output tokens
-  function swap(uint256 amount0Out, uint256 amount1Out, address to) lock public {
+  function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) lock public {
     if(amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
     // Store old reserves
     (uint256 _reserve0, uint256 _reserve1) = getReserves();
